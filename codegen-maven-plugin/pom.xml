@@ -24,6 +24,7 @@
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-project.version>2.2.1</maven-project.version>
         <plexus-build-api.version>0.0.7</plexus-build-api.version>
+        <maven-plugin-plugin.version>3.6.0</maven-plugin-plugin.version>
     </properties>
 
     <dependencies>
@@ -88,7 +89,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
-                <version>3.2</version>
+                <version>${maven-plugin-plugin.version}</version>
                 <configuration>
                     <goalPrefix>codegen</goalPrefix>
                 </configuration>
