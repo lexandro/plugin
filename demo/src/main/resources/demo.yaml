@@ -1,0 +1,13 @@
+name: DemoApi
+formatVersion: v1
+description: Demo api for my custom plugin
+version: 1.0.0
+entities:
+  - name: red
+    fields:
+      - name: id
+        type: string
+      - name: name
+        type: string
+
+

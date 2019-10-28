@@ -3,8 +3,8 @@ The purpose of this project to create a PoC Maven plugin to practice on-the-fly 
 process.
 
 ## TODO
-[ ] add a yaml parser
 [ ] create a simple yaml-> java PoC
+[x] add a yaml parser and a small yaml example
 [x] add a source code artifact configuration+download+unzip function
 [x] separate the plugin and the demo code to different modules
 [x] add CI build

@@ -2,7 +2,10 @@ package com.lexandro.plugin;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.URI;
@@ -32,6 +35,8 @@ import org.codehaus.plexus.archiver.UnArchiver;
 import org.codehaus.plexus.archiver.manager.ArchiverManager;
 import org.codehaus.plexus.archiver.manager.NoSuchArchiverException;
 import org.sonatype.plexus.build.incremental.BuildContext;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
 
 /**
  * Genereates a PoC source code and adds to the build.
@@ -107,7 +112,18 @@ public class CodegenDemo extends AbstractMojo {
         }
         log.info("Output directory base will be " + outputDirectory.getAbsolutePath());
 
-        File outputFile = new File(outputDirectory, "Hello.java");
+        Yaml yaml = new Yaml(new Constructor(Api.class));
+
+        InputStream inputStream = null;
+        try {
+            inputStream = new FileInputStream(project.getBasedir() + "/src/main/resources/demo.yaml");
+        } catch (FileNotFoundException e) {
+            throw new MojoExecutionException(e.getMessage(), e);
+        }
+        Api api = yaml.load(inputStream);
+        log.info(api.toString());
+
+        File outputFile = new File(outputDirectory, api.getName() + ".java");
         URI relativePath = project.getBasedir().toURI().relativize(outputFile.toURI());
         log.info("  Writing file: " + relativePath);
 
@@ -115,13 +131,13 @@ public class CodegenDemo extends AbstractMojo {
         try {
             outputStream = buildContext.newFileOutputStream(outputFile);
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream));
-            writer.write("package com.lexandro.plugin.demo;\n\n"
-                + "public class Hello {\n"
+            writer.write(String.format("package com.lexandro.plugin.demo;\n\n"
+                + "class %s {\n"
                 + "\n"
                 + "    public static void main(String[] args) {\n"
                 + "        System.out.println(\"Hello from generated class\");\n"
                 + "    }\n"
-                + "}");
+                + "}", api.getName()));
             writer.flush();
             writer.close();
         } catch (IOException e) {
@@ -166,13 +182,6 @@ public class CodegenDemo extends AbstractMojo {
                 unArchiver = archiverManager.getUnArchiver(file);
                 getLog().info("Found unArchiver by extension: " + unArchiver);
             }
-//
-//            if (encoding != null && unArchiver instanceof ZipUnArchiver) {
-//                ((ZipUnArchiver) unArchiver).setEncoding(encoding);
-//                getLog().info("Unpacks '" + type + "' with encoding '" + encoding + "'.");
-//            }
-//
-//            unArchiver.setIgnorePermissions(ignorePermissions);
 
             unArchiver.setSourceFile(file);
 
@@ -187,7 +196,7 @@ public class CodegenDemo extends AbstractMojo {
         }
     }
 
-    protected Artifact getArtifact(ArtifactItem artifactItem) throws MojoExecutionException {
+    private Artifact getArtifact(ArtifactItem artifactItem) throws MojoExecutionException {
         Artifact artifact;
 
         try {
@@ -217,9 +226,8 @@ public class CodegenDemo extends AbstractMojo {
         return artifact;
     }
 
-    public ProjectBuildingRequest newResolveArtifactProjectBuildingRequest() {
-        ProjectBuildingRequest buildingRequest =
-            new DefaultProjectBuildingRequest(session.getProjectBuildingRequest());
+    private ProjectBuildingRequest newResolveArtifactProjectBuildingRequest() {
+        ProjectBuildingRequest buildingRequest = new DefaultProjectBuildingRequest(session.getProjectBuildingRequest());
 
         buildingRequest.setRemoteRepositories(remoteRepositories);
 
