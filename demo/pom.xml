@@ -30,7 +30,7 @@
                 <version>1.0-SNAPSHOT</version>
                 <executions>
                     <execution>
-                        <phase>compile</phase>
+                        <phase>generate-sources</phase>
                         <goals>
                             <goal>codegen</goal>
                         </goals>

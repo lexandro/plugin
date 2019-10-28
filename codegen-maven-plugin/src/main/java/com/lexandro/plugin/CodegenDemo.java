@@ -1,5 +1,11 @@
 package com.lexandro.plugin;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.URI;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
@@ -10,17 +16,13 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
-import java.io.*;
-import java.net.URI;
-
 /**
  * Genereates a PoC source code and adds to the build.
  */
 @Mojo(
-        name = "codegen",
-        defaultPhase = LifecyclePhase.GENERATE_SOURCES,
-        requiresProject = true
-
+    name = "codegen",
+    defaultPhase = LifecyclePhase.GENERATE_SOURCES,
+    requiresProject = true
 )
 public class CodegenDemo extends AbstractMojo {
     // TODO add input/output encoding, includes/excludes, source/destination dir,
@@ -42,10 +44,6 @@ public class CodegenDemo extends AbstractMojo {
         return outputDirectory;
     }
 
-    void addSourceRoot(File outputDir) {
-        project.addCompileSourceRoot(outputDir.getPath());
-    }
-
     public void execute() throws MojoExecutionException {
         Log log = getLog();
         log.info("Generating source(s)");
@@ -55,21 +53,36 @@ public class CodegenDemo extends AbstractMojo {
         if (!outputDir.exists()) {
             outputDir.mkdirs();
         }
-        log.debug("Output directory base will be " + outputDirectory.getAbsolutePath());
+        log.info("Output directory base will be " + outputDirectory.getAbsolutePath());
 
-        File outputFile = new File(outputDirectory, "hello.java");
+        File outputFile = new File(outputDirectory, "Hello.java");
         URI relativePath = project.getBasedir().toURI().relativize(outputFile.toURI());
-        log.debug("  Writing file: " + relativePath);
+        log.info("  Writing file: " + relativePath);
 
         OutputStream outputStream = null;
         try {
             outputStream = buildContext.newFileOutputStream(outputFile);
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream));
-            writer.write("Hello!");
+            writer.write("package com.lexandro.plugin.demo;\n\n"
+                + "public class Hello {\n"
+                + "\n"
+                + "    public static void main(String[] args) {\n"
+                + "        System.out.println(\"Hello from generated class\");\n"
+                + "    }\n"
+                + "}");
             writer.flush();
             writer.close();
         } catch (IOException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }
+        log.info("Code generation done");
+        if (project != null) {
+            addSourceRoot(this.getOutputDirectory());
+        }
+
+    }
+
+    void addSourceRoot(File outputDir) {
+        project.addCompileSourceRoot(outputDir.getPath());
     }
 }
