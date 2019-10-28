@@ -131,7 +131,8 @@ public class CodegenDemo extends AbstractMojo {
         if (project != null) {
             for (ArtifactItem artifactItem : artifactItems) {
                 unpackArtifact(artifactItem);
-                addSourceRoot(artifactItem.getOutputDirectory());
+                // We are not adding the downloaded and unzipped artifact  to the compilation process
+                // addSourceRoot(artifactItem.getOutputDirectory());
             }
             addSourceRoot(this.getOutputDirectory());
         }
