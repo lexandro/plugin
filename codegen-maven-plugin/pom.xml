@@ -1,116 +1,139 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>com.lexandro</groupId>
-        <artifactId>plugin-demo</artifactId>
-        <version>1.0-SNAPSHOT</version>
-    </parent>
-
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
     <groupId>com.lexandro</groupId>
-    <artifactId>codegen-maven-plugin</artifactId>
+    <artifactId>plugin-demo</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <packaging>maven-plugin</packaging>
+  </parent>
 
-    <name>codegen-maven-plugin</name>
+  <groupId>com.lexandro</groupId>
+  <artifactId>codegen-maven-plugin</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>maven-plugin</packaging>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven-plugin-api.version>3.0</maven-plugin-api.version>
-        <maven-plugin-annotations.version>3.4</maven-plugin-annotations.version>
-        <maven-compiler-plugin.target>11</maven-compiler-plugin.target>
-        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-        <maven-project.version>2.2.1</maven-project.version>
-        <plexus-build-api.version>0.0.7</plexus-build-api.version>
-        <maven-plugin-plugin.version>3.6.0</maven-plugin-plugin.version>
-    </properties>
+  <name>codegen-maven-plugin</name>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-plugin-api</artifactId>
-            <version>${maven-plugin-api.version}</version>
-        </dependency>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven-plugin-api.version>3.0</maven-plugin-api.version>
+    <maven-plugin-annotations.version>3.4</maven-plugin-annotations.version>
+    <maven-compiler-plugin.target>11</maven-compiler-plugin.target>
+    <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+    <maven-project.version>2.2.1</maven-project.version>
+    <plexus-build-api.version>0.0.7</plexus-build-api.version>
+    <maven-plugin-plugin.version>3.6.0</maven-plugin-plugin.version>
+    <maven-artifact-transfer.version>0.11.0</maven-artifact-transfer.version>
+    <lombok.version>1.18.10</lombok.version>
+    <plexus-archiver.version>4.2.0</plexus-archiver.version>
+  </properties>
 
-        <!-- dependencies to annotations -->
-        <dependency>
-            <groupId>org.apache.maven.plugin-tools</groupId>
-            <artifactId>maven-plugin-annotations</artifactId>
-            <version>${maven-plugin-annotations.version}</version>
-            <scope>provided</scope>
-        </dependency>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-plugin-api</artifactId>
+      <version>${maven-plugin-api.version}</version>
+    </dependency>
 
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-project</artifactId>
-            <version>${maven-project.version}</version>
-        </dependency>
+    <!-- dependencies to annotations -->
+    <dependency>
+      <groupId>org.apache.maven.plugin-tools</groupId>
+      <artifactId>maven-plugin-annotations</artifactId>
+      <version>${maven-plugin-annotations.version}</version>
+      <scope>provided</scope>
+    </dependency>
 
-        <dependency>
-            <groupId>org.sonatype.plexus</groupId>
-            <artifactId>plexus-build-api</artifactId>
-            <version>${plexus-build-api.version}</version>
-        </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-project</artifactId>
+      <version>${maven-project.version}</version>
+    </dependency>
 
-        <dependency>
-            <groupId>javax.inject</groupId>
-            <artifactId>javax.inject</artifactId>
-            <version>1</version>
-        </dependency>
-    </dependencies>
+    <dependency>
+      <groupId>org.sonatype.plexus</groupId>
+      <artifactId>plexus-build-api</artifactId>
+      <version>${plexus-build-api.version}</version>
+    </dependency>
 
-    <build>
-         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${maven-compiler-plugin.version}</version>
-                <configuration>
-                    <source>${maven-compiler-plugin.target}</source>
-                    <target>${maven-compiler-plugin.target}</target>
-                </configuration>
-            </plugin>
+    <dependency>
+      <groupId>org.apache.maven.shared</groupId>
+      <artifactId>maven-artifact-transfer</artifactId>
+      <version>${maven-artifact-transfer.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-archiver</artifactId>
+      <version>${plexus-archiver.version}</version>
+    </dependency>
 
-            <plugin>
-                <groupId>org.eclipse.sisu</groupId>
-                <artifactId>sisu-maven-plugin</artifactId>
-                <version>0.3.3</version>
-                <executions>
-                    <execution>
-                        <id>generate-index</id>
-                        <goals>
-                            <goal>main-index</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-plugin-plugin</artifactId>
-                <version>${maven-plugin-plugin.version}</version>
-                <configuration>
-                    <goalPrefix>codegen</goalPrefix>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>default-descriptor</id>
-                        <goals>
-                            <goal>descriptor</goal>
-                        </goals>
-                        <phase>process-classes</phase>
-                    </execution>
-                    <execution>
-                        <id>help-descriptor</id>
-                        <goals>
-                            <goal>helpmojo</goal>
-                        </goals>
-                        <phase>process-classes</phase>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+    <dependency>
+      <groupId>javax.inject</groupId>
+      <artifactId>javax.inject</artifactId>
+      <version>1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${lombok.version}</version>
+      <scope>provided</scope>
+      <optional>true</optional>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven-compiler-plugin.version}</version>
+        <configuration>
+          <source>${maven-compiler-plugin.target}</source>
+          <target>${maven-compiler-plugin.target}</target>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.eclipse.sisu</groupId>
+        <artifactId>sisu-maven-plugin</artifactId>
+        <version>0.3.3</version>
+        <executions>
+          <execution>
+            <id>generate-index</id>
+            <goals>
+              <goal>main-index</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-plugin-plugin</artifactId>
+        <version>${maven-plugin-plugin.version}</version>
+        <configuration>
+          <goalPrefix>codegen</goalPrefix>
+        </configuration>
+        <executions>
+          <execution>
+            <id>default-descriptor</id>
+            <goals>
+              <goal>descriptor</goal>
+            </goals>
+            <phase>process-classes</phase>
+          </execution>
+          <execution>
+            <id>help-descriptor</id>
+            <goals>
+              <goal>helpmojo</goal>
+            </goals>
+            <phase>process-classes</phase>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>
