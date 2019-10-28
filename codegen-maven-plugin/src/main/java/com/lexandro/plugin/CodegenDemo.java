@@ -49,8 +49,7 @@ import org.yaml.snakeyaml.constructor.Constructor;
  */
 @Mojo(
         name = "codegen",
-        defaultPhase = LifecyclePhase.GENERATE_SOURCES,
-        requiresProject = true
+        defaultPhase = LifecyclePhase.GENERATE_SOURCES
 )
 public class CodegenDemo extends AbstractMojo {
     // TODO add input/output encoding, includes/excludes, source/destination dir,
