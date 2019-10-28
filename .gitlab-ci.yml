@@ -1,0 +1,14 @@
+image: maven:3-jdk-11-slim
+
+stages:
+  - build
+build:
+  stage: build
+  script:
+    - mvn -B clean install
+  only:
+    - master
+    - develop
+    - /^release\/.*$/
+    - /^hotfix\/.*$/
+    - /^feature/.*$/
