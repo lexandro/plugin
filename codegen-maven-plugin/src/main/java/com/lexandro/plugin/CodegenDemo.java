@@ -9,9 +9,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import lombok.Getter;
+import lombok.SneakyThrows;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
@@ -43,9 +48,9 @@ import org.yaml.snakeyaml.constructor.Constructor;
  * Genereates a PoC source code and adds to the build.
  */
 @Mojo(
-    name = "codegen",
-    defaultPhase = LifecyclePhase.GENERATE_SOURCES,
-    requiresProject = true
+        name = "codegen",
+        defaultPhase = LifecyclePhase.GENERATE_SOURCES,
+        requiresProject = true
 )
 public class CodegenDemo extends AbstractMojo {
     // TODO add input/output encoding, includes/excludes, source/destination dir,
@@ -102,9 +107,18 @@ public class CodegenDemo extends AbstractMojo {
             log.info("Processing artifact(s)");
             for (ArtifactItem artifactItem : artifactItems) {
                 unpackArtifact(artifactItem);
+                processArtifact(artifactItem);
             }
         }
 
+        log.info("Code generation done");
+        if (project != null) {
+            addSourceRoot(this.getOutputDirectory());
+        }
+    }
+
+    private void processArtifact(ArtifactItem artifactItem) throws MojoExecutionException {
+        Log log = getLog();
         File outputDir = getOutputDirectory();
 
         if (!outputDir.exists()) {
@@ -113,16 +127,24 @@ public class CodegenDemo extends AbstractMojo {
         }
         log.info("Output directory base will be " + outputDirectory.getAbsolutePath());
 
-        Yaml yaml = new Yaml(new Constructor(Api.class));
-
-        InputStream inputStream = null;
         try {
-            inputStream = new FileInputStream(project.getBasedir() + "/src/main/resources/demo.yaml");
-        } catch (FileNotFoundException e) {
+            Files.walk(Paths.get(artifactItem.getOutputDirectory().getAbsolutePath()))
+                    .filter(Files::isRegularFile)
+                    .filter(f -> f.toString().endsWith(".yml") || f.toString().endsWith(".yaml"))
+                    .forEach(this::processApiDefinition);
+        } catch (IOException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }
+    }
+
+    @SneakyThrows
+    private void processApiDefinition(Path filePath) {
+        Log log = getLog();
+
+        InputStream inputStream = new FileInputStream(filePath.toAbsolutePath().toString());
+
+        Yaml yaml = new Yaml(new Constructor(Api.class));
         Api api = yaml.load(inputStream);
-        log.info(api.toString());
 
         File outputFile = new File(outputDirectory, api.getName() + ".java");
         URI relativePath = project.getBasedir().toURI().relativize(outputFile.toURI());
@@ -138,28 +160,18 @@ public class CodegenDemo extends AbstractMojo {
         } catch (IOException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }
-        log.info("Code generation done");
-        if (project != null) {
-            for (ArtifactItem artifactItem : artifactItems) {
-                unpackArtifact(artifactItem);
-                // We are not adding the downloaded and unzipped artifact  to the compilation process
-                // addSourceRoot(artifactItem.getOutputDirectory());
-            }
-            addSourceRoot(this.getOutputDirectory());
-        }
-
     }
 
     private String generateJava(Api api) {
         String fields = api.getFields().stream().map(f -> String.format("\n\t//Generated code: \n\tprivate %s %s;", f.getType(), f.getName())).collect(Collectors.joining("\n"));
         return String.format("package com.lexandro.plugin.demo;\n\n"
-            + "class %s {\n"
-            + "%s"
-            + "\n\n"
-            + "    public static void main(String[] args) {\n"
-            + "        System.out.println(\"Hello from generated class: %s\");\n"
-            + "    }\n"
-            + "}", api.getName(), fields, api.getDescription());
+                + "class %s {\n"
+                + "%s"
+                + "\n\n"
+                + "    public static void main(String[] args) {\n"
+                + "        System.out.println(\"Hello from generated class: %s\");\n"
+                + "    }\n"
+                + "}", api.getName(), fields, api.getDescription());
     }
 
     private void unpackArtifact(ArtifactItem artifactItem) throws MojoExecutionException {
@@ -171,23 +183,23 @@ public class CodegenDemo extends AbstractMojo {
             location.mkdirs();
             if (!location.exists()) {
                 throw new MojoExecutionException("Location to write unpacked files to could not be created: "
-                    + location);
+                        + location);
             }
 
             if (file.isDirectory()) {
                 // usual case is a future jar packaging, but there are special cases: classifier and other packaging
                 throw new MojoExecutionException("Artifact has not been packaged yet. When used on reactor artifact, "
-                    + "unpack should be executed after packaging: see MDEP-98.");
+                        + "unpack should be executed after packaging: see MDEP-98.");
             }
 
             UnArchiver unArchiver;
             String type = artifactItem.getType();
             try {
                 unArchiver = archiverManager.getUnArchiver(type);
-                getLog().info("Found unArchiver by type: " + unArchiver);
+                getLog().debug("Found unArchiver by type: " + unArchiver);
             } catch (NoSuchArchiverException e) {
                 unArchiver = archiverManager.getUnArchiver(file);
-                getLog().info("Found unArchiver by extension: " + unArchiver);
+                getLog().debug("Found unArchiver by extension: " + unArchiver);
             }
 
             unArchiver.setSourceFile(file);
@@ -199,7 +211,7 @@ public class CodegenDemo extends AbstractMojo {
             throw new MojoExecutionException("Unknown archiver type", e);
         } catch (ArchiverException e) {
             throw new MojoExecutionException("Error unpacking file: " + file + " to: " + location
-                + System.lineSeparator() + e.toString(), e);
+                    + System.lineSeparator() + e.toString(), e);
         }
     }
 

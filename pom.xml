@@ -11,6 +11,7 @@
 
     <modules>
         <module>codegen-maven-plugin</module>
+        <module>api</module>
         <module>demo</module>
     </modules>
 

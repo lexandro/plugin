@@ -1,0 +1,11 @@
+name: DemoApi2
+formatVersion: v1
+description: Demo api2 for my custom plugin
+version: 1.0.0
+fields:
+  - name: id2
+    type: String
+  - name: name2
+    type: String
+
+
