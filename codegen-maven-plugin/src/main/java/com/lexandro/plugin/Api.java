@@ -10,6 +10,6 @@ public class Api {
     private String formatVersion;
     private String description;
     private String version;
-    private List<Entity> entities;
+    private List<Field> fields;
 
 }

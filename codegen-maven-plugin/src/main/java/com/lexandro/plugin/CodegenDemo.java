@@ -10,6 +10,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
@@ -131,13 +132,7 @@ public class CodegenDemo extends AbstractMojo {
         try {
             outputStream = buildContext.newFileOutputStream(outputFile);
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream));
-            writer.write(String.format("package com.lexandro.plugin.demo;\n\n"
-                + "class %s {\n"
-                + "\n"
-                + "    public static void main(String[] args) {\n"
-                + "        System.out.println(\"Hello from generated class\");\n"
-                + "    }\n"
-                + "}", api.getName()));
+            writer.write(generateJava(api));
             writer.flush();
             writer.close();
         } catch (IOException e) {
@@ -153,6 +148,18 @@ public class CodegenDemo extends AbstractMojo {
             addSourceRoot(this.getOutputDirectory());
         }
 
+    }
+
+    private String generateJava(Api api) {
+        String fields = api.getFields().stream().map(f -> String.format("\n\t//Generated code: \n\tprivate %s %s;", f.getType(), f.getName())).collect(Collectors.joining("\n"));
+        return String.format("package com.lexandro.plugin.demo;\n\n"
+            + "class %s {\n"
+            + "%s"
+            + "\n\n"
+            + "    public static void main(String[] args) {\n"
+            + "        System.out.println(\"Hello from generated class: %s\");\n"
+            + "    }\n"
+            + "}", api.getName(), fields, api.getDescription());
     }
 
     private void unpackArtifact(ArtifactItem artifactItem) throws MojoExecutionException {
