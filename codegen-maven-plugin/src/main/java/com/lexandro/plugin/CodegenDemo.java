@@ -1,20 +1,5 @@
 package com.lexandro.plugin;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.maven.artifact.Artifact;
@@ -35,7 +20,6 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.shared.transfer.artifact.DefaultArtifactCoordinate;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver;
-import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolverException;
 import org.codehaus.plexus.archiver.ArchiverException;
 import org.codehaus.plexus.archiver.UnArchiver;
 import org.codehaus.plexus.archiver.manager.ArchiverManager;
@@ -43,6 +27,14 @@ import org.codehaus.plexus.archiver.manager.NoSuchArchiverException;
 import org.sonatype.plexus.build.incremental.BuildContext;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
+
+import java.io.*;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Genereates a PoC source code and adds to the build.
@@ -52,7 +44,6 @@ import org.yaml.snakeyaml.constructor.Constructor;
         defaultPhase = LifecyclePhase.GENERATE_SOURCES
 )
 public class CodegenDemo extends AbstractMojo {
-    // TODO add input/output encoding, includes/excludes, source/destination dir,
 
     @Parameter(defaultValue = "${project.build.directory}/generated-sources/codegen")
     @Getter
@@ -109,37 +100,30 @@ public class CodegenDemo extends AbstractMojo {
                 processArtifact(artifactItem);
             }
         }
-
         log.info("Code generation done");
         if (project != null) {
-            addSourceRoot(this.getOutputDirectory());
+            project.addCompileSourceRoot(outputDirectory.getPath());
         }
     }
 
-    private void processArtifact(ArtifactItem artifactItem) throws MojoExecutionException {
-        Log log = getLog();
+    @SneakyThrows
+    private void processArtifact(ArtifactItem artifactItem) {
         File outputDir = getOutputDirectory();
 
         if (!outputDir.exists()) {
             //noinspection ResultOfMethodCallIgnored
             outputDir.mkdirs();
         }
-        log.info("Output directory base will be " + outputDirectory.getAbsolutePath());
+        getLog().info("Output directory base will be " + outputDirectory.getAbsolutePath());
 
-        try {
-            Files.walk(Paths.get(artifactItem.getOutputDirectory().getAbsolutePath()))
-                    .filter(Files::isRegularFile)
-                    .filter(f -> f.toString().endsWith(".yml") || f.toString().endsWith(".yaml"))
-                    .forEach(this::processApiDefinition);
-        } catch (IOException e) {
-            throw new MojoExecutionException(e.getMessage(), e);
-        }
+        Files.walk(Paths.get(artifactItem.getOutputDirectory().getAbsolutePath()))
+                .filter(Files::isRegularFile)
+                .filter(f -> f.toString().endsWith(".yml") || f.toString().endsWith(".yaml"))
+                .forEach(this::processApiDefinition);
     }
 
     @SneakyThrows
     private void processApiDefinition(Path filePath) {
-        Log log = getLog();
-
         InputStream inputStream = new FileInputStream(filePath.toAbsolutePath().toString());
 
         Yaml yaml = new Yaml(new Constructor(Api.class));
@@ -147,18 +131,14 @@ public class CodegenDemo extends AbstractMojo {
 
         File outputFile = new File(outputDirectory, api.getName() + ".java");
         URI relativePath = project.getBasedir().toURI().relativize(outputFile.toURI());
-        log.info("  Writing file: " + relativePath);
+        getLog().info("  Writing file: " + relativePath);
 
-        OutputStream outputStream = null;
-        try {
-            outputStream = buildContext.newFileOutputStream(outputFile);
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream));
-            writer.write(generateJava(api));
-            writer.flush();
-            writer.close();
-        } catch (IOException e) {
-            throw new MojoExecutionException(e.getMessage(), e);
-        }
+        OutputStream outputStream;
+        outputStream = buildContext.newFileOutputStream(outputFile);
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream));
+        writer.write(generateJava(api));
+        writer.flush();
+        writer.close();
     }
 
     private String generateJava(Api api) {
@@ -179,6 +159,7 @@ public class CodegenDemo extends AbstractMojo {
         try {
 
             location = artifactItem.getOutputDirectory();
+            //noinspection ResultOfMethodCallIgnored
             location.mkdirs();
             if (!location.exists()) {
                 throw new MojoExecutionException("Location to write unpacked files to could not be created: "
@@ -214,34 +195,27 @@ public class CodegenDemo extends AbstractMojo {
         }
     }
 
-    private Artifact getArtifact(ArtifactItem artifactItem) throws MojoExecutionException {
-        Artifact artifact;
+    @SneakyThrows
+    private Artifact getArtifact(ArtifactItem artifactItem) {
+        ProjectBuildingRequest buildingRequest = newResolveArtifactProjectBuildingRequest();
 
-        try {
-            ProjectBuildingRequest buildingRequest = newResolveArtifactProjectBuildingRequest();
+        // Map dependency to artifact coordinate
+        DefaultArtifactCoordinate coordinate = new DefaultArtifactCoordinate();
+        coordinate.setGroupId(artifactItem.getGroupId());
+        coordinate.setArtifactId(artifactItem.getArtifactId());
+        coordinate.setVersion(artifactItem.getVersion());
+        coordinate.setClassifier(artifactItem.getClassifier());
 
-            // Map dependency to artifact coordinate
-            DefaultArtifactCoordinate coordinate = new DefaultArtifactCoordinate();
-            coordinate.setGroupId(artifactItem.getGroupId());
-            coordinate.setArtifactId(artifactItem.getArtifactId());
-            coordinate.setVersion(artifactItem.getVersion());
-            coordinate.setClassifier(artifactItem.getClassifier());
-
-            final String extension;
-            ArtifactHandler artifactHandler = artifactHandlerManager.getArtifactHandler(artifactItem.getType());
-            if (artifactHandler != null) {
-                extension = artifactHandler.getExtension();
-            } else {
-                extension = artifactItem.getType();
-            }
-            coordinate.setExtension(extension);
-
-            artifact = artifactResolver.resolveArtifact(buildingRequest, coordinate).getArtifact();
-        } catch (ArtifactResolverException e) {
-            throw new MojoExecutionException("Unable to find/resolve artifact.", e);
+        final String extension;
+        ArtifactHandler artifactHandler = artifactHandlerManager.getArtifactHandler(artifactItem.getType());
+        if (artifactHandler != null) {
+            extension = artifactHandler.getExtension();
+        } else {
+            extension = artifactItem.getType();
         }
+        coordinate.setExtension(extension);
 
-        return artifact;
+        return artifactResolver.resolveArtifact(buildingRequest, coordinate).getArtifact();
     }
 
     private ProjectBuildingRequest newResolveArtifactProjectBuildingRequest() {
@@ -252,7 +226,4 @@ public class CodegenDemo extends AbstractMojo {
         return buildingRequest;
     }
 
-    void addSourceRoot(File outputDir) {
-        project.addCompileSourceRoot(outputDir.getPath());
-    }
 }
