@@ -15,9 +15,9 @@ The project has 3 maven modules:
 Checkout and use ```mvn install```. You can check the result in the ```<project>demo/target/generated-sources``` folder
 
 ## TODO
-[x] generate a sample java source and add to the build process
-[x] separate the plugin and the demo code to different modules
-[x] create a simple yaml-> java PoC
-[x] add a yaml parser and a small yaml example
-[x] add a source code artifact configuration+download+unzip function
-[x] add CI build
+- [x] generate a sample java source and add to the build process
+- [x] separate the plugin and the demo code to different modules
+- [x] create a simple yaml-> java PoC
+- [x] add a yaml parser and a small yaml example
+- [x] add a source code artifact configuration+download+unzip function
+- [x] add CI build

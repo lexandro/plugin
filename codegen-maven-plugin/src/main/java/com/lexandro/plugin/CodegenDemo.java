@@ -144,7 +144,7 @@ public class CodegenDemo extends AbstractMojo {
     private String generateJava(Api api) {
         String fields = api.getFields().stream().map(f -> String.format("\n\t//Generated code: \n\tprivate %s %s;", f.getType(), f.getName())).collect(Collectors.joining("\n"));
         return String.format("package com.lexandro.plugin.demo;\n\n"
-                + "class %s {\n"
+                + "public class %s {\n"
                 + "%s"
                 + "\n\n"
                 + "    public static void main(String[] args) {\n"
