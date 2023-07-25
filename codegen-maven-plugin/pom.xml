@@ -27,7 +27,7 @@
     <maven-plugin-plugin.version>3.6.0</maven-plugin-plugin.version>
     <maven-artifact-transfer.version>0.11.0</maven-artifact-transfer.version>
     <lombok.version>1.18.10</lombok.version>
-    <plexus-archiver.version>4.2.0</plexus-archiver.version>
+    <plexus-archiver.version>4.8.0</plexus-archiver.version>
     <snakeyaml.version>2.0</snakeyaml.version>
   </properties>
 
